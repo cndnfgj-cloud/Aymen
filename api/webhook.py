@@ -43,10 +43,28 @@ def generate_reply(user_text: str) -> str:
         url = "https://vetrex.x10.mx/api/gpt4.php?text=" + quote_plus(text)
         resp = requests.get(url, timeout=40)
         resp.raise_for_status()
+
+        # نحاول أولاً نقرأه كـ JSON مثل:
+        # {
+        #   "date": "...",
+        #   "answer": "النص اللي نبيه",
+        #   "dev": "..."
+        # }
+        try:
+            data = resp.json()
+            answer = data.get("answer")
+            if answer:
+                return answer.strip()
+        except ValueError:
+            # لو الرد مو JSON نكمّل عادي
+            pass
+
+        # لو ما قدرنا نقرأ JSON أو ما فيه answer نرجع النص الخام
         content = resp.text.strip()
         if not content:
             return "لم أستقبل رداً من خدمة الذكاء الاصطناعي الخارجية، حاول مرة أخرى."
         return content
+
     except Exception:
         return "حدث خطأ أثناء الاتصال بواجهة الذكاء الاصطناعي الخارجية. حاول مرة أخرى لاحقاً."
 
